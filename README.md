@@ -7,20 +7,20 @@ In the background you can see a window. The sun is in the sky and moves slowly a
 ## Effects
 
 ### Composed object
-Die Sonne im Hintergrund
+The sun in the background. 
 Sun rays are animated. The sun moves as the day goes by.
 
 ### Illumination
-Sonne und Lampe an der Decke
-Sun is moving
+Sun and lamp on the ceiling. 
+Sun is moving.
 
 ### Automated Camera flight
-After the cat has run away the camera moves so that the bathtub is no longer visible but only the scenery outside (+ credits?)
+After the cat has run away the camera moves so that the bathtub is no longer visible but only the scenery outside (+ credits?).
 
 ## Special effects
 
 ### Multi texturing
-Durchsichtiges Wasser bzw Glas im Fenster
+Transparent water or glass in the window.
 
 ### Billboarding
-Could be text (credits) always pointing in the same direction towards the camera while the camera moves
+Could be text (credits) always pointing in the same direction towards the camera while the camera moves.
