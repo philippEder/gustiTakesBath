@@ -109,6 +109,7 @@ function createBathtub(rootNode) {
   var tubWidth = 1;
   var tubHeigth = 1;
   var tubThicc = 0.3;
+  var waterThicc = 0.1;
 
   var tubMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(0.6,0,0));
   tubMatrix = mat4.multiply(mat4.create(), tubMatrix, glm.scale(1,1,1));
@@ -151,24 +152,42 @@ function createBathtub(rootNode) {
   tubLeftNode = new CubeRenderNode();
   tubLeftTrafoNode.append(tubLeftNode);
 
-  /*
-   //transformation of left leg
-   var leftLegTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(0.16,-0.6,0));
-   leftLegTransformationMatrix = mat4.multiply(mat4.create(), leftLegTransformationMatrix, glm.scale(0.2,1,1));
-   var leftLegTransformationNode = new TransformationSceneGraphNode(leftLegTransformationMatrix);
-   robotTransformationNode.append(leftLegTransformationNode);
- 
-   //left leg
-   cubeNode = new CubeRenderNode();
-   leftLegTransformationNode.append(cubeNode);
-   */
+  // tub water Q1
+  var Q1TrafoMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate((tubWidth-tubThicc)*0.25,tubHeigth*0.2,(tubLength-tubThicc)*0.25));
+  Q1TrafoMatrix = mat4.multiply(mat4.create(), Q1TrafoMatrix, glm.scale(tubWidth-tubThicc,waterThicc,tubLength));
+  Q1TrafoNode = new TransformationSceneGraphNode(Q1TrafoMatrix);
+  tubNode.append(Q1TrafoNode);
+  
+  Q1Node = new CubeRenderNode();
+  Q1TrafoNode.append(Q1Node);
 
-  /*
-  var tubBackMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(2,-0.6,0));
-  tubBackMatrix = mat4.multiply(mat4.create(), tubBackMatrix, glm.scale(0.2,1,1));
-  var tubBackNode = new CubeRenderNode(tubBackMatrix);
-  tubNode.append(tubBackNode);
-  */
+  // tub water Q2
+  var Q2TrafoMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate((tubWidth-tubThicc)*0.25,tubHeigth*0.2,-(tubLength-tubThicc)*0.25));
+  Q2TrafoMatrix = mat4.multiply(mat4.create(), Q2TrafoMatrix, glm.scale(tubWidth-tubThicc,waterThicc,tubLength));
+  Q2TrafoNode = new TransformationSceneGraphNode(Q2TrafoMatrix);
+  tubNode.append(Q2TrafoNode);
+  
+  Q2Node = new CubeRenderNode();
+  Q2TrafoNode.append(Q2Node);
+
+// tub water Q3
+var Q3TrafoMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(-(tubWidth-tubThicc)*0.25,tubHeigth*0.2,(tubLength-tubThicc)*0.25));
+Q3TrafoMatrix = mat4.multiply(mat4.create(), Q3TrafoMatrix, glm.scale(tubWidth-tubThicc,waterThicc,tubLength));
+Q3TrafoNode = new TransformationSceneGraphNode(Q3TrafoMatrix);
+tubNode.append(Q3TrafoNode);
+
+Q3Node = new CubeRenderNode();
+Q3TrafoNode.append(Q3Node);
+
+// tub water Q4
+var Q4TrafoMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(-(tubWidth-tubThicc)*0.25,tubHeigth*0.2,-(tubLength-tubThicc)*0.25));
+Q4TrafoMatrix = mat4.multiply(mat4.create(), Q4TrafoMatrix, glm.scale(tubWidth-tubThicc,waterThicc,tubLength));
+Q4TrafoNode = new TransformationSceneGraphNode(Q4TrafoMatrix);
+tubNode.append(Q4TrafoNode);
+
+Q4Node = new CubeRenderNode();
+Q4TrafoNode.append(Q4Node);
+
 }
 
 function createRobot(rootNode) {
