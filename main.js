@@ -21,11 +21,10 @@ var context;
 var animatedAngle = 0;
 var fieldOfViewInRadians = convertDegreeToRadians(30);
 
-var robotTransformationNode;
 var headTransformationNode;
 
 //links to buffer stored on the GPU
-var cubeVertexBuffer, cubeColorBuffer, cubeIndexBuffer;
+var cubeVertexBuffer, cubeColorBuffer, tubColorsBuffer, waterColorsBuffer, cubeIndexBuffer;
 
 var s = 0.3; //size of cube
 var cubeVertices = new Float32Array([
@@ -45,6 +44,24 @@ var cubeColors = new Float32Array([
  1,1,0, 1,1,0, 1,1,0, 1,1,0,
  0,1,0, 0,1,0, 0,1,0, 0,1,0
 ]);
+
+var tubColors = new Float32Array([
+  1,1,1, 1,1,1, 1,1,1, 1,1,1,
+  1,1,1, 1,1,1, 1,1,1, 1,1,1,
+  1,1,1, 1,1,1, 1,1,1, 1,1,1,
+  1,1,1, 1,1,1, 1,1,1, 1,1,1,
+  1,1,1, 1,1,1, 1,1,1, 1,1,1,
+  1,1,1, 1,1,1, 1,1,1, 1,1,1
+ ]);
+
+ var waterColors = new Float32Array([
+  0,1,1, 0,1,1, 0,1,1, 0,1,1,
+  0,1,1, 0,1,1, 0,1,1, 0,1,1,
+  0,1,1, 0,1,1, 0,1,1, 0,1,1,
+  0,1,1, 0,1,1, 0,1,1, 0,1,1,
+  0,1,1, 0,1,1, 0,1,1, 0,1,1,
+  0,1,1, 0,1,1, 0,1,1, 0,1,1
+ ]);
 
 var cubeIndices =  new Float32Array([
  0,1,2, 0,2,3,
@@ -71,8 +88,6 @@ function init(resources) {
   //create scenegraph
   rootNode = new SceneGraphNode();
 
-  createRobot(rootNode);
-
   createBathtub(rootNode);
 }
 
@@ -86,21 +101,26 @@ function initCubeBuffer() {
   gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, cubeColors, gl.STATIC_DRAW);
 
+  tubColorsBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, tubColorsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, tubColors, gl.STATIC_DRAW);
+
+  waterColorsBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, waterColorsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, waterColors, gl.STATIC_DRAW);
+
   cubeIndexBuffer = gl.createBuffer ();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
 }
 
 
-//load the shader resources using a utility function
 loadResources({
   vs: 'shader/simple.vs.glsl',
-  fs: 'shader/simple.fs.glsl',
-  staticcolorvs: 'shader/static_color.vs.glsl'
+  fs: 'shader/simple.fs.glsl'
+  //staticcolorvs: 'shader/static_color.vs.glsl'
 }).then(function (resources /*an object containing our keys with the loaded resources*/) {
   init(resources);
-
-  //render one frame
   render(0);
 });
 
@@ -122,7 +142,7 @@ function createBathtub(rootNode) {
   tubFrontTrafoNode = new TransformationSceneGraphNode(tubFrontTrafoMatrix);
   tubNode.append(tubFrontTrafoNode);
   
-  tubFrontNode = new CubeRenderNode();
+  tubFrontNode = new TubRenderNode();
   tubFrontTrafoNode.append(tubFrontNode);
 
   // tub back
@@ -131,7 +151,7 @@ function createBathtub(rootNode) {
   tubBackTrafoNode = new TransformationSceneGraphNode(tubBackTrafoMatrix);
   tubNode.append(tubBackTrafoNode);
   
-  tubBackNode = new CubeRenderNode();
+  tubBackNode = new TubRenderNode();
   tubBackTrafoNode.append(tubBackNode);
 
   // tub right
@@ -140,7 +160,7 @@ function createBathtub(rootNode) {
   tubRightTrafoNode = new TransformationSceneGraphNode(tubRightTrafoMatrix);
   tubNode.append(tubRightTrafoNode);
   
-  tubRightNode = new CubeRenderNode();
+  tubRightNode = new TubRenderNode();
   tubRightTrafoNode.append(tubRightNode);
 
   // tub left
@@ -149,7 +169,7 @@ function createBathtub(rootNode) {
   tubLeftTrafoNode = new TransformationSceneGraphNode(tubLeftTrafoMatrix);
   tubNode.append(tubLeftTrafoNode);
   
-  tubLeftNode = new CubeRenderNode();
+  tubLeftNode = new TubRenderNode();
   tubLeftTrafoNode.append(tubLeftNode);
 
   // tub water Q1
@@ -158,7 +178,7 @@ function createBathtub(rootNode) {
   Q1TrafoNode = new TransformationSceneGraphNode(Q1TrafoMatrix);
   tubNode.append(Q1TrafoNode);
   
-  Q1Node = new CubeRenderNode();
+  Q1Node = new WaterRenderNode();
   Q1TrafoNode.append(Q1Node);
 
   // tub water Q2
@@ -167,7 +187,7 @@ function createBathtub(rootNode) {
   Q2TrafoNode = new TransformationSceneGraphNode(Q2TrafoMatrix);
   tubNode.append(Q2TrafoNode);
   
-  Q2Node = new CubeRenderNode();
+  Q2Node = new WaterRenderNode();
   Q2TrafoNode.append(Q2Node);
 
 // tub water Q3
@@ -176,7 +196,7 @@ Q3TrafoMatrix = mat4.multiply(mat4.create(), Q3TrafoMatrix, glm.scale(tubWidth-t
 Q3TrafoNode = new TransformationSceneGraphNode(Q3TrafoMatrix);
 tubNode.append(Q3TrafoNode);
 
-Q3Node = new CubeRenderNode();
+Q3Node = new WaterRenderNode();
 Q3TrafoNode.append(Q3Node);
 
 // tub water Q4
@@ -185,62 +205,12 @@ Q4TrafoMatrix = mat4.multiply(mat4.create(), Q4TrafoMatrix, glm.scale(tubWidth-t
 Q4TrafoNode = new TransformationSceneGraphNode(Q4TrafoMatrix);
 tubNode.append(Q4TrafoNode);
 
-Q4Node = new CubeRenderNode();
+Q4Node = new WaterRenderNode();
 Q4TrafoNode.append(Q4Node);
 
 }
 
-function createRobot(rootNode) {
 
-  //TASK 6-1
-
-  //transformations of whole body
-  var robotTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle/2));
-  robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.translate(0.3,0.9,0));
-  robotTransformationNode = new TransformationSceneGraphNode(robotTransformationMatrix);
-  rootNode.append(robotTransformationNode);
-
-  //body
-  cubeNode = new CubeRenderNode();
-  robotTransformationNode.append(cubeNode);
-
-  //transformation of head
-  var headTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle));
-  headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.translate(0.0,0.4,0));
-  headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.scale(0.4,0.33,0.5));
-  headTransformationNode = new TransformationSceneGraphNode(headTransformationMatrix);
-  robotTransformationNode.append(headTransformationNode);
-
-  //head
-  cubeNode = new CubeRenderNode();
-  headTransformationNode.append(cubeNode);
-
-  //transformation of left leg
-  var leftLegTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(0.16,-0.6,0));
-  leftLegTransformationMatrix = mat4.multiply(mat4.create(), leftLegTransformationMatrix, glm.scale(0.2,1,1));
-  var leftLegTransformationNode = new TransformationSceneGraphNode(leftLegTransformationMatrix);
-  robotTransformationNode.append(leftLegTransformationNode);
-
-  //left leg
-  cubeNode = new CubeRenderNode();
-  leftLegTransformationNode.append(cubeNode);
-
-  //transformation of right leg
-  var rightLegTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(-0.16,-0.6,0));
-  rightLegTransformationMatrix = mat4.multiply(mat4.create(), rightLegTransformationMatrix, glm.scale(0.2,1,1));
-  var rightLegtTransformationNode = new TransformationSceneGraphNode(rightLegTransformationMatrix);
-  robotTransformationNode.append(rightLegtTransformationNode);
-
-  //right leg
-  cubeNode = new CubeRenderNode();
-  rightLegtTransformationNode.append(cubeNode);
-}
-
-
-
-/**
- * render one frame
- */
 function render(timeInMilliseconds) {
 
   //set background color to light gray
@@ -255,34 +225,17 @@ function render(timeInMilliseconds) {
   //TASK 1-1
   gl.enable(gl.BLEND);
   //TASK 1-2
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
 
   //activate this shader program
   gl.useProgram(shaderProgram);
-
-  //TASK 6-2
-  //update transformation of robot for rotation animation
-  var robotTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle/2));
-  robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.translate(0.3,0.9,0));
-  robotTransformationNode.setMatrix(robotTransformationMatrix);
-
-  var headTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle));
-  headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.translate(0.0,0.4,0));
-  headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.scale(0.4,0.33,0.5));
-  headTransformationNode.setMatrix(headTransformationMatrix);
 
   context = createSceneGraphContext(gl, shaderProgram);
 
   rootNode.render(context);
 
-  //TASK 2-0 comment renderQuad & renderRobot out:
-  // renderQuad(context.sceneMatrix, context.viewMatrix);
-  // renderRobot(context.sceneMatrix, context.viewMatrix);
-
-  //request another render call as soon as possible
   requestAnimationFrame(render);
 
-  //animate based on elapsed time
   animatedAngle = timeInMilliseconds/10;
 }
 
@@ -297,12 +250,6 @@ function setUpModelViewMatrix(sceneMatrix, viewMatrix) {
   gl.uniformMatrix4fv(gl.getUniformLocation(context.shader, 'u_modelView'), false, modelViewMatrix);
 }
 
-/**
- * returns a new rendering context
- * @param gl the gl context
- * @param shader the shader program
- * @returns {ISceneGraphContext}
- */
 function createSceneGraphContext(gl, shader) {
 
   //create a default projection matrix
@@ -326,186 +273,6 @@ function calculateViewMatrix() {
   viewMatrix = mat4.lookAt(mat4.create(), eye, center, up);
   return viewMatrix;
 }
-
-/**
- * base node of the scenegraph
- */
-class SceneGraphNode {
-
-  constructor() {
-    this.children = [];
-  }
-
-  /**
-   * appends a new child to this node
-   * @param child the child to append
-   * @returns {SceneGraphNode} the child
-   */
-  append(child) {
-    this.children.push(child);
-    return child;
-  }
-
-  /**
-   * removes a child from this node
-   * @param child
-   * @returns {boolean} whether the operation was successful
-   */
-  remove(child) {
-    var i = this.children.indexOf(child);
-    if (i >= 0) {
-      this.children.splice(i, 1);
-    }
-    return i >= 0;
-  };
-
-  /**
-   * render method to render this scengraph
-   * @param context
-   */
-  render(context) {
-
-    //render all children
-    this.children.forEach(function (c) {
-      return c.render(context);
-    });
-  };
-}
-
-/**
- * a quad node that renders floor plane
- */
-class QuadRenderNode extends SceneGraphNode {
-
-  render(context) {
-
-
-    //TASK 2-1
-
-    //setting the model view and projection for the shader
-    setUpModelViewMatrix(context.sceneMatrix, context.viewMatrix);
-    gl.uniformMatrix4fv(gl.getUniformLocation(context.shader, 'u_projection'), false, context.projectionMatrix);
-
-
-    var positionLocation = gl.getAttribLocation(context.shader, 'a_position');
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVertexBuffer);
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(positionLocation);
-
-    var colorLocation = gl.getAttribLocation(context.shader, 'a_color');
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadColorBuffer);
-    gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(colorLocation);
-
-    //set alpha value for blending
-    //TASK 1-3
-    gl.uniform1f(gl.getUniformLocation(context.shader, 'u_alpha'), 1);
-
-    // draw the bound data as 6 vertices = 2 triangles starting at index 0
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    //render children
-    super.render(context);
-  }
-}
-
-/**
- * a cube node that renders a cube at its local origin
- */
-class CubeRenderNode extends SceneGraphNode {
-
-  render(context) {
-
-    //setting the model view and projection for the shader
-    setUpModelViewMatrix(context.sceneMatrix, context.viewMatrix);
-    gl.uniformMatrix4fv(gl.getUniformLocation(context.shader, 'u_projection'), false, context.projectionMatrix);
-
-
-    var positionLocation = gl.getAttribLocation(context.shader, 'a_position');
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexBuffer);
-    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false,0,0) ;
-    gl.enableVertexAttribArray(positionLocation);
-
-    var colorLocation = gl.getAttribLocation(context.shader, 'a_color');
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuffer);
-    gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false,0,0) ;
-    gl.enableVertexAttribArray(colorLocation);
-
-    //set alpha value for blending
-    //TASK 1-3
-    gl.uniform1f(gl.getUniformLocation(context.shader, 'u_alpha'), 0.5);
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuffer);
-    gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
-
-    //render children
-    super.render(context);
-  }
-}
-
-/**
- * a transformation node, i.e applied a transformation matrix to its successors
- */
-class TransformationSceneGraphNode extends SceneGraphNode { //compare with TransformationSGNode in framework.js
-  /**
-   * the matrix to apply
-   * @param matrix
-   */
-  constructor(matrix) {
-    super();
-    this.matrix = matrix || mat4.create();
-  }
-
-  render(context) {
-    //backup previous one
-    var previous = context.sceneMatrix;
-    //set current world matrix by multiplying it
-    if (previous === null) {
-      context.sceneMatrix = mat4.clone(this.matrix);
-    }
-    else {
-      context.sceneMatrix = mat4.multiply(mat4.create(), previous, this.matrix);
-    }
-
-    //render children
-    super.render(context);
-    //restore backup
-    context.sceneMatrix = previous;
-  }
-
-  setMatrix(matrix) {
-    this.matrix = matrix;
-  }
-}
-
-/**
- * a shader node sets a specific shader for the successors
- */
-class ShaderSceneGraphNode extends SceneGraphNode { //compare with ShaderSGNode in framework.js
-  /**
-   * constructs a new shader node with the given shader program
-   * @param shader the shader program to use
-   */
-  constructor(shader) {
-    super();
-    this.shader = shader;
-  }
-
-  render(context) {
-    //backup prevoius one
-    var backup = context.shader;
-    //set current shader
-    context.shader = this.shader;
-    //activate the shader
-    context.gl.useProgram(this.shader);
-    //render children
-    super.render(context);
-    //restore backup
-    context.shader = backup;
-    //activate the shader
-    context.gl.useProgram(backup);
-  }
-};
 
 function convertDegreeToRadians(degree) {
   return degree * Math.PI / 180
