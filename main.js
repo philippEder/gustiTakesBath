@@ -10,21 +10,24 @@ var gl = null;
 var program = null;
 
 // stuff from 03_scenegraphs
-var canvasWidth = 800;
-var canvasHeight = 800;
+var canvasWidth = 1900;
+var canvasHeight = 955;
 var aspectRatio = canvasWidth / canvasHeight;
 
 //rendering context
 var context;
 
 //camera and projection settings
-var animatedAngle = 0;
 var fieldOfViewInRadians = convertDegreeToRadians(30);
 
 var headTransformationNode;
 
 //links to buffer stored on the GPU
 var cubeVertexBuffer, cubeColorBuffer, tubColorsBuffer, waterColorsBuffer, cubeIndexBuffer;
+
+//animationHelpers
+var animatedAngle = 0;
+var waterAnimationCounter = 0;
 
 var s = 0.3; //size of cube
 var cubeVertices = new Float32Array([
@@ -83,11 +86,11 @@ function init(resources) {
   shaderProgram = createProgram(gl, resources.vs, resources.fs);
 
   //set buffers for cube
-    initCubeBuffer();
+  initCubeBuffer();
 
   //create scenegraph
   rootNode = new SceneGraphNode();
-
+  
   createBathtub(rootNode);
 }
 
@@ -178,7 +181,7 @@ function createBathtub(rootNode) {
   Q1TrafoNode = new TransformationSceneGraphNode(Q1TrafoMatrix);
   tubNode.append(Q1TrafoNode);
   
-  Q1Node = new WaterRenderNode();
+  Q1Node = new WaterRenderNode(200);
   Q1TrafoNode.append(Q1Node);
 
   // tub water Q2
@@ -187,7 +190,7 @@ function createBathtub(rootNode) {
   Q2TrafoNode = new TransformationSceneGraphNode(Q2TrafoMatrix);
   tubNode.append(Q2TrafoNode);
   
-  Q2Node = new WaterRenderNode();
+  Q2Node = new WaterRenderNode(300);
   Q2TrafoNode.append(Q2Node);
 
 // tub water Q3
@@ -196,7 +199,7 @@ Q3TrafoMatrix = mat4.multiply(mat4.create(), Q3TrafoMatrix, glm.scale(tubWidth-t
 Q3TrafoNode = new TransformationSceneGraphNode(Q3TrafoMatrix);
 tubNode.append(Q3TrafoNode);
 
-Q3Node = new WaterRenderNode();
+Q3Node = new WaterRenderNode(400);
 Q3TrafoNode.append(Q3Node);
 
 // tub water Q4
@@ -205,7 +208,7 @@ Q4TrafoMatrix = mat4.multiply(mat4.create(), Q4TrafoMatrix, glm.scale(tubWidth-t
 Q4TrafoNode = new TransformationSceneGraphNode(Q4TrafoMatrix);
 tubNode.append(Q4TrafoNode);
 
-Q4Node = new WaterRenderNode();
+Q4Node = new WaterRenderNode(500);
 Q4TrafoNode.append(Q4Node);
 
 }
